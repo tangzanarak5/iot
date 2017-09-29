@@ -1,0 +1,22 @@
+peferen  http://arduino.esp8266.com/stable/package_esp8266com_index.json
+
+Libariesiot
+esp8266
+Iot tweet
+Microgear
+DHT22
+
+include board esp8266
+
+
+nodemcu esp8266
+
+D0 = 16
+D1 = 5
+D2 = 4
+D3 = 0
+D4 = 2
+D5 = 14
+D6 = 12
+D7 = 13
+D8 = 15

@@ -1,0 +1,681 @@
+///////////////// LED BLINK /////////////////
+int led = 13 ;
+
+void setup() {
+
+  pinMode(led, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(led, HIGH);
+  delay(1000);
+  digitalWrite(led, LOW);
+  delay(1000);
+}
+///////////////// LED BLINK /////////////////
+
+///////////////// LED BLINK ติดช้าๆ /////////////////
+
+int timer = 100;
+void setup(){
+  for(int thisPin = 5; thisPin < 8; thisPin++){
+    pinMode(thisPin, OUTPUT);
+  }
+}
+void loop(){
+  for(int thisPin = 5; thisPin < 8; thisPin++){
+    digitalWrite(thisPin, HIGH);
+    delay(timer);
+
+    digitalWrite(thisPin, LOW);
+  }
+  for(int thisPin = 7; thisPin >= 5; thisPin++){
+    digitalWrite(thisPin, HIGH);
+    delay(timer);
+
+    digitalWrite(thisPin, LOW);
+  }
+}
+
+///////////////// LED BLINK 3 /////////////////
+
+///////////////// LED BLINK 3 /////////////////
+
+int ledred = 7;
+int ledyellow = 6;
+int ledblue = 5;
+void setup(){
+  pinMode(ledred,OUTPUT);
+  pinMode(ledyellow,OUTPUT);
+  pinMode(ledblue,OUTPUT);
+  }
+void loop(){
+  analogWrite(ledred,0);
+  analogWrite(ledyellow,0);
+  analogWrite(ledblue,0);
+  delay(1000);
+
+  analogWrite(ledred,64);
+  analogWrite(ledyellow,64);
+  analogWrite(ledblue,64);
+  delay(1000);
+
+  analogWrite(ledred,128);
+  analogWrite(ledyellow,128);
+  analogWrite(ledblue,128);
+  delay(1000);
+
+  analogWrite(ledred,192);
+  analogWrite(ledyellow,192);
+  analogWrite(ledblue,192);
+  delay(1000);
+
+  analogWrite(ledred,255);
+  analogWrite(ledyellow,255);
+  analogWrite(ledblue,255);
+  delay(1000);
+  }
+
+///////////////// LED BLINK ติดช้าๆ /////////////////
+
+///////////////// DHT /////////////////
+
+#include "DHT.h"
+
+#define DHTPIN 2
+
+#define DHTTYPE DHT22
+
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println("DHTxx test!");
+
+  dht.begin();
+}
+
+void loop() {
+
+  delay(2000);
+
+  float h = dht.readHumidity();
+
+  float t = dht.readTemperature();
+
+  float f = dht.readTemperature(true);
+
+  if (isnan(h) || isnan(t) || isnan(f)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
+  }
+
+  float hif = dht.computeHeatIndex(f, h);
+
+  float hic = dht.computeHeatIndex(t, h, false);
+
+  Serial.print("Humidity: ");
+  Serial.print(h);
+  Serial.print(" %\t");
+  Serial.print("Temperature: ");
+  Serial.print(t);
+  Serial.print(" *C ");
+  Serial.print(f);
+  Serial.print(" *F\t");
+  Serial.print("Heat index: ");
+  Serial.print(hic);
+  Serial.print(" *C ");
+  Serial.print(hif);
+  Serial.println(" *F");
+}
+
+///////////////// DHT /////////////////
+
+///////////////// NETPIE /////////////////
+
+#include <DHT.h>
+#include <ESP8266WiFi.h>
+#include <MicroGear.h>
+
+const char* ssid = "itfitm";      //************Change*******************
+const char* password = "";        //************Change*******************
+
+#define APPID "nuttapunnakpong"   //************Change*******************
+#define KEY "14EstWClEpjFkRR"     //************Change*******************
+#define SECRET "vht3P8TY93n17NACHLviUBLUc"  //************Change*******************
+#define ALIAS "alias_esp8266"
+WiFiClient client;
+int timer = 0;
+char str[32];
+#define DHTTYPE DHT22 //Define sensor type
+#define DHTPIN D4 // Define sensor pin
+DHT dht(DHTPIN, DHTTYPE, 15); //Initialize DHT sensor
+int humid;
+int temp;
+MicroGear microgear(client);
+
+void onMsghandler(char *topic, uint8_t* msg, unsigned int msglen) {
+      Serial.print("Incoming message --> ");
+      msg[msglen] = '\0';
+      Serial.println((char *)msg);
+}
+
+void onConnected(char *attribute, uint8_t* msg, unsigned int msglen) {
+      Serial.println("Connected to NETPIE...");
+      microgear.setAlias(ALIAS);
+}
+void setup() {
+  dht.begin();
+
+  microgear.on(MESSAGE,onMsghandler);
+  microgear.on(CONNECTED,onConnected);
+  Serial.begin(115200);
+  Serial.println("Starting...");
+
+  if (WiFi.begin(ssid, password)) {
+      while (WiFi.status() != WL_CONNECTED) {
+          delay(500);
+          Serial.print(".");
+      }
+  }
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+
+  microgear.init(KEY,SECRET,ALIAS);
+  microgear.connect(APPID);
+}
+
+void loop() {
+  if (microgear.connected()) {
+      Serial.println("connected");
+      if (timer >= 1000) {
+          humid = dht.readHumidity();
+          temp = dht.readTemperature();
+          sprintf(str,"%d,%d",humid,temp);
+          Serial.println(str);
+          Serial.println("Sending --> ");
+          microgear.publish("/dht",str);
+          microgear.publish("/kfc",str); /////////////////////kfc
+          timer = 0;
+      }
+      else timer += 100;
+  }
+  else {
+    Serial.println("connection lost, reconnect...");
+    if (timer >= 5000) {
+      microgear.connect(APPID);
+      timer = 0;
+      }
+      else timer += 100;
+  }
+  delay(1000);
+}
+
+///////////////////////////////////////////////////////////////////////
+
+///////////////////////// netpie blink /////////////////////////
+
+/*  NETPIE ESP8266 blink                                   */
+
+#include <ESP8266WiFi.h>
+#include <MicroGear.h>
+
+const char* ssid     = "itfitm"; //your ssid
+const char* password = ""; //your password
+
+#define APPID   "itfitm" //your AppID
+#define KEY     "EXu5zEVL4JZvD4K" //your Key
+#define SECRET  "PyOAFdozWueQujeMgwEWzVsQ7" //your Secret
+#define ALIAS   "NodeMCU12E"
+
+WiFiClient client;
+
+int timer = 0;
+char state = 0;
+MicroGear microgear(client);
+
+/* If a new message arrives, do this */
+void onMsghandler(char *topic, uint8_t* msg, unsigned int msglen) {
+    Serial.print("Incoming message --> ");
+    msg[msglen] = '\0';
+    Serial.println((char *)msg);
+// If messaage = 1 On LED, If 0 LED off
+    if(*(char *)msg == '1'){
+        digitalWrite(LED_BUILTIN, LOW); // LED on
+      }else{
+        digitalWrite(LED_BUILTIN, HIGH); // LED off }
+    }
+}
+
+/*
+void onFoundgear(char *attribute, uint8_t* msg, unsigned int msglen) {
+    Serial.print("Found new member --> ");
+    for (int i=0; i<msglen; i++)
+        Serial.print((char)msg[i]);
+    Serial.println();
+}
+
+void onLostgear(char *attribute, uint8_t* msg, unsigned int msglen) {
+    Serial.print("Lost member --> ");
+    for (int i=0; i<msglen; i++)
+        Serial.print((char)msg[i]);
+    Serial.println();
+}
+*/
+
+/* When a microgear is connected, do this */
+void onConnected(char *attribute, uint8_t* msg, unsigned int msglen) {
+    Serial.println("Connected to NETPIE...");
+    /* Set the alias of this microgear ALIAS */
+    microgear.setAlias(ALIAS);
+}
+
+
+void setup() {
+    /* Add Event listeners */
+
+    /* Call onMsghandler() when new message arraives */
+    microgear.on(MESSAGE,onMsghandler);
+
+    /* Call onFoundgear() when new gear appear */
+    //microgear.on(PRESENT,onFoundgear);
+
+    /* Call onLostgear() when some gear goes offline */
+    //microgear.on(ABSENT,onLostgear);
+
+    /* Call onConnected() when NETPIE connection is established */
+    microgear.on(CONNECTED,onConnected);
+
+    Serial.begin(115200);
+    Serial.println("Starting...");
+
+    pinMode(LED_BUILTIN, OUTPUT); //Set LED Built-in to Output
+
+    /* Initial WIFI, this is just a basic method to configure WIFI on ESP8266.                       */
+    /* You may want to use other method that is more complicated, but provide better user experience */
+    if (WiFi.begin(ssid, password)) {
+        while (WiFi.status() != WL_CONNECTED) {
+            delay(500);
+            Serial.print(".");
+        }
+    }
+
+    Serial.println("WiFi connected");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
+
+    /* Initial with KEY, SECRET and also set the ALIAS here */
+    microgear.init(KEY,SECRET,ALIAS);
+
+    /* connect to NETPIE to a specific APPID */
+    microgear.connect(APPID);
+}
+
+void loop() {
+    /* To check if the microgear is still connected */
+    if (microgear.connected()) {
+        Serial.println("connected");
+
+        /* Call this method regularly otherwise the connection may be lost */
+        microgear.loop();
+
+        if (timer >= 1000) {
+            Serial.println("Publish...");
+
+            //chat myself with invert stage
+            if(state==0){
+              microgear.chat(ALIAS,state);
+              state = 1;
+            }else{
+              microgear.chat(ALIAS,state);
+              state = 0;
+            }
+            timer = 0;
+        }
+        else timer += 100;
+    }
+    else {
+        Serial.println("connection lost, reconnect...");
+        if (timer >= 5000) {
+            microgear.connect(APPID);
+            timer = 0;
+        }
+        else timer += 100;
+    }
+    delay(100);
+}
+////////////////////////////////////////////////////////
+
+////////////////////// thingspeak /////////////////////
+
+#include <LiquidCrystal_I2C.h>
+
+#include "DHT.h"
+#include <ESP8266WiFi.h>
+
+#define PUMP_RLY 4    // output drive relay for pump GPIO4 (D2)
+#define DHTPIN 2     // what pin we're connected to GPIO2 (D4)
+#define DHTTYPE DHT22   // DHT 11
+
+#define DEBUG
+
+#define DEBUG_PRINTER Serial
+
+#ifdef DEBUG
+#define DEBUG_PRINT(...) { DEBUG_PRINTER.print(__VA_ARGS__); }
+#define DEBUG_PRINTLN(...) { DEBUG_PRINTER.println(__VA_ARGS__); }
+#else
+#define DEBUG_PRINT(...) {}
+#define DEBUG_PRINTLN(...) {}
+#endif
+
+const char* ssid     = "FITM WiFi";
+const char* password = "";
+
+DHT *dht;
+
+void connectWifi();
+void reconnectWifiIfLinkDown();
+void initDht(DHT **dht, uint8_t pin, uint8_t dht_type);
+void readDht(DHT *dht, float *temp, float *humid);
+void uploadThingsSpeak(float t, float h);
+
+void setup() {
+    Serial.begin(115200);
+    delay(10);
+    pinMode(PUMP_RLY, OUTPUT); // Initialize the PUMP_RLY(4) pin as an output
+    digitalWrite(PUMP_RLY, HIGH);// Make sure relay is normal off
+
+    connectWifi();
+
+    initDht(&dht, DHTPIN, DHTTYPE);
+}
+
+void loop() {
+    static float t_dht;
+    static float h_dht;
+
+    readDht(dht, &t_dht, &h_dht);
+    if(h_dht < 30 || t_dht > 26) // condition for make relay on
+    {
+      digitalWrite(PUMP_RLY, LOW); //If condition true do this!
+    } else
+    {
+      digitalWrite(PUMP_RLY, HIGH);
+    }
+    uploadThingsSpeak(t_dht, h_dht);
+
+    // Wait a few seconds between measurements.
+    delay(10 * 1000);
+    reconnectWifiIfLinkDown();
+}
+
+void reconnectWifiIfLinkDown() {
+    if (WiFi.status() != WL_CONNECTED) {
+        DEBUG_PRINTLN("WIFI DISCONNECTED");
+        connectWifi();
+    }
+}
+
+void connectWifi() {
+    DEBUG_PRINTLN();
+    DEBUG_PRINTLN();
+    DEBUG_PRINT("Connecting to ");
+    DEBUG_PRINTLN(ssid);
+
+    WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        DEBUG_PRINT(".");
+    }
+
+    DEBUG_PRINTLN("");
+    DEBUG_PRINTLN("WiFi connected");
+    DEBUG_PRINTLN("IP address: ");
+    DEBUG_PRINTLN(WiFi.localIP());
+}
+
+void initDht(DHT **dht, uint8_t pin, uint8_t dht_type) {
+    // Connect pin 1 (on the left) of the sensor to +5V
+    // NOTE: If using a board with 3.3V logic like an Arduino Due connect pin 1
+    // to 3.3V instead of 5V!
+    // Connect pin 2 of the sensor to whatever your DHTPIN is
+    // Connect pin 4 (on the right) of the sensor to GROUND
+    // Connect a 10K resistor from pin 2 (data) to pin 1 (power) of the sensor
+
+    // Initialize DHT sensor for normal 16mhz Arduino
+    // NOTE: For working with a faster chip, like an Arduino Due or Teensy, you
+    // might need to increase the threshold for cycle counts considered a 1 or 0.
+    // You can do this by passing a 3rd parameter for this threshold.  It's a bit
+    // of fiddling to find the right value, but in general the faster the CPU the
+    // higher the value.  The default for a 16mhz AVR is a value of 6.  For an
+    // Arduino Due that runs at 84mhz a value of 30 works.
+    // Example to initialize DHT sensor for Arduino Due:
+    //DHT dht(DHTPIN, DHTTYPE, 30);
+
+    *dht = new DHT(pin, dht_type, 30);
+    (*dht)->begin();
+    DEBUG_PRINTLN(F("DHTxx test!"))  ;
+}
+
+void uploadThingsSpeak(float t, float h) {
+    static const char* host = "api.thingspeak.com"; /////////////////
+    static const char* apiKey = "QOKXKXO48TJW16EL"; ///////////////////////
+
+    // Use WiFiClient class to create TCP connections
+    WiFiClient client;
+    const int httpPort = 80;
+    if (!client.connect(host, httpPort)) {
+        DEBUG_PRINTLN("connection failed");
+        return;
+    }
+
+    // We now create a URI for the request
+    String url = "/update/";
+    //  url += streamId;
+    url += "?key=";
+    url += apiKey;
+    url += "&field1=";
+    url += t;
+    url += "&field2=";
+    url += h;
+
+    DEBUG_PRINT("Requesting URL: ");
+    DEBUG_PRINTLN(url);
+
+    // This will send the request to the server
+    client.print(String("GET ") + url + " HTTP/1.1\r\n" +
+                 "Host: " + host + "\r\n" +
+                 "Connection: close\r\n\r\n");
+}
+
+
+void readDht(DHT *dht, float *temp, float *humid) {
+
+    if (dht == NULL) {
+        DEBUG_PRINTLN(F("[dht11] is not initialised. please call initDht() first."));
+        return;
+    }
+
+    // Reading temperature or humidity takes about 250 milliseconds!
+    // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+    float h = dht->readHumidity();
+
+    // Read temperature as Celsius
+    float t = dht->readTemperature();
+    // Read temperature as Fahrenheit
+    float f = dht->readTemperature(true);
+
+    // Check if any reads failed and exit early (to try again).
+    if (isnan(h) || isnan(t) || isnan(f)) {
+        DEBUG_PRINTLN("Failed to read from DHT sensor!");
+        return;
+    }
+
+    // Compute heat index
+    // Must send in temp in Fahrenheit!
+    float hi = dht->computeHeatIndex(f, h);
+
+    DEBUG_PRINT("Humidity: ");
+    DEBUG_PRINT(h);
+    DEBUG_PRINT(" %\t");
+    DEBUG_PRINT("Temperature: ");
+    DEBUG_PRINT(t);
+    DEBUG_PRINT(" *C ");
+    DEBUG_PRINT(f);
+    DEBUG_PRINT(" *F\t");
+    DEBUG_PRINT("Heat index: ");
+    DEBUG_PRINT(hi);
+    DEBUG_PRINTLN(" *F");
+
+    *temp = t;
+    *humid = h;
+}
+///////////////////////////////////////////////////////////
+
+///////////////////// iot tweet ///////////////////////
+
+// DHT Temperature & Humidity Sensor
+// Unified Sensor Library Example
+// Written by Tony DiCola for Adafruit Industries
+// Released under an MIT license.
+
+// Depends on the following Arduino libraries:
+// - Adafruit Unified Sensor Library: https://github.com/adafruit/Adafruit_Sensor
+// - DHT Sensor Library: https://github.com/adafruit/DHT-sensor-library
+
+#include <Adafruit_Sensor.h>
+#include <DHT.h>
+#include <DHT_U.h>
+
+#define DHTPIN            2         // Pin which is connected to the DHT sensor.
+
+// Uncomment the type of sensor in use:
+//#define DHTTYPE           DHT11     // DHT 11
+#define DHTTYPE           DHT22     // DHT 22 (AM2302)
+//#define DHTTYPE           DHT21     // DHT 21 (AM2301)
+
+// See guide for details on sensor wiring and usage:
+//   https://learn.adafruit.com/dht/overview
+
+DHT_Unified dht(DHTPIN, DHTTYPE);
+
+uint32_t delayMS;
+
+
+#include <ESP8266WiFi.h>
+#include <IoTtweet.h>
+
+const char *userid = "000786";            //IoTtweet account user ID (6 digits, included zero pre-fix)
+const char *key = "7wy6gb2pt5hz";     //IoTtweet registered device key in "MY IOT Garage"
+const char *ssid = "FITM WiFi";                    //Your-WiFi-router-SSID
+const char *password = "";            //Your-WiFi-password
+
+float data0, data1, data2, data3;                        //Your sending data variable.
+String private_tweet = "สวัสดีครับ";                    //Your private tweet meassage to dashboard  กดเลือก Tweet privaet panel
+String public_tweet = "IoT Smart Farm 4.0";         //Your public tweet message to dashboard  กดเลือก Tweet public panel
+
+IoTtweet myiot;  //naming your devices
+
+
+
+
+void setup() {
+  Serial.begin(9600);
+  // Initialize device.
+  dht.begin();
+  Serial.println("DHTxx Unified Sensor Example");
+  // Print temperature sensor details.
+  sensor_t sensor;
+  dht.temperature().getSensor(&sensor);
+  Serial.println("------------------------------------");
+  Serial.println("Temperature");
+  Serial.print  ("Sensor:       "); Serial.println(sensor.name);
+  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);
+  Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);
+  Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" *C");
+  Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" *C");
+  Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" *C");
+  Serial.println("------------------------------------");
+  // Print humidity sensor details.
+  dht.humidity().getSensor(&sensor);
+  Serial.println("------------------------------------");
+  Serial.println("Humidity");
+  Serial.print  ("Sensor:       "); Serial.println(sensor.name);
+  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);
+  Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);
+  Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println("%");
+  Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println("%");
+  Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println("%");
+  Serial.println("------------------------------------");
+  // Set delay between sensor readings based on sensor details.
+  delayMS = sensor.min_delay / 1000;
+
+ String libvers = myiot.getVersion();
+  Serial.println("IoTtweet Library vesion : " + String(libvers));
+
+  //Connect WiFi
+  Serial.println("\nConnect wifi...");
+  bool conn = myiot.begin(ssid,password);
+
+    if(!conn)
+    {
+      Serial.println("WiFi connection failed.");
+    }else
+    {
+      Serial.println("WiFi connected !");
+     }
+
+
+
+
+}
+
+void loop() {
+  // Delay between measurements.
+  delay(delayMS);
+  // Get temperature event and print its value.
+  sensors_event_t event;
+  dht.temperature().getEvent(&event);
+  if (isnan(event.temperature)) {
+    Serial.println("Error reading temperature!");
+  }
+  else {
+    Serial.print("Temperature: ");
+    Serial.print(event.temperature);
+    Serial.println(" *C");
+    data0 = event.temperature ;
+  }
+  // Get humidity event and print its value.
+  dht.humidity().getEvent(&event);
+  if (isnan(event.relative_humidity)) {
+    Serial.println("Error reading humidity!");
+  }
+  else {
+    Serial.print("Humidity: ");
+    Serial.print(event.relative_humidity);
+    Serial.println("%");
+    data1 = event.relative_humidity;
+  }
+
+
+
+   //Example data generating
+
+
+  //data2 = random(0,10);
+  //data3 = random(0,10);
+
+  //Send data from your iot to Dashboard
+  String response = myiot.WriteDashboard(userid,key,data0,data1,data2,data3,private_tweet,public_tweet);
+  Serial.println(response);   //Show response JSON from www.iottweet.com
+
+  //Waiting storage data on IoTtweet cloud 15 sec.
+  delay(15000);
+
+
+
+}
+
+///////////////////////////////////
